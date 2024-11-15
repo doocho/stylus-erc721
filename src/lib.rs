@@ -24,10 +24,7 @@ impl Erc721Params for StylusNFTParams {
     const SYMBOL: &'static str = "VWNFT";
 
     fn token_uri(token_id: U256) -> String {
-        format!(
-            "{}",
-            "https://veriwell-nft.s3.us-east-1.amazonaws.com/veriwell.json"
-        )
+        "https://veriwell-nft.s3.us-east-1.amazonaws.com/veriwell.json".to_string()
     }
 }
 
