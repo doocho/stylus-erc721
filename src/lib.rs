@@ -5,15 +5,13 @@ extern crate alloc;
 // Modules and imports
 mod erc721;
 
-use alloy_primitives::{U256, Address};
+use crate::erc721::{Erc721, Erc721Error, Erc721Params};
+use alloy_primitives::{Address, U256};
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
-use stylus_sdk::{
-    msg, prelude::*
-};
-use crate::erc721::{Erc721, Erc721Params, Erc721Error};
-use crate::ownable::Ownable;
+use stylus_sdk::{msg, prelude::*};
+// use crate::ownable::Ownable;
 
-mod ownable;
+// mod ownable;
 
 /// Initializes a custom, global allocator for Rust programs compiled to WASM.
 #[global_allocator]
@@ -25,9 +23,11 @@ impl Erc721Params for StylusNFTParams {
     const NAME: &'static str = "VeriWell NFT";
     const SYMBOL: &'static str = "VWNFT";
 
-    // nft image : https://i.ibb.co/mFyB2J9/veriwell-nft-eth.jpg
     fn token_uri(token_id: U256) -> String {
-        format!("{}", "https://veriwell-nft.s3.us-east-1.amazonaws.com/veriwell.json")
+        format!(
+            "{}",
+            "https://veriwell-nft.s3.us-east-1.amazonaws.com/veriwell.json"
+        )
     }
 }
 
@@ -39,17 +39,18 @@ sol_storage! {
     struct StylusNFT {
         #[borrow] // Allows erc721 to access StylusNFT's storage and make calls
         Erc721<StylusNFTParams> erc721;
-        #[borrow]
-        Ownable ownable;
+        // #[borrow]
+        // Ownable ownable;
     }
 }
 
 #[external]
-#[inherit(Erc721<StylusNFTParams>, Ownable)]
+#[inherit(Erc721<StylusNFTParams>)]
+// #[inherit(Erc721<StylusNFTParams>, Ownable)]
 impl StylusNFT {
     /// Mints an NFT
     pub fn mint(&mut self) -> Result<(), Erc721Error> {
-        self.ownable.only_owner();
+        // self.ownable.only_owner();
         let minter = msg::sender();
         self.erc721.mint(minter)?;
         Ok(())
@@ -57,7 +58,7 @@ impl StylusNFT {
 
     /// Mints an NFT to another address
     pub fn mint_to(&mut self, to: Address) -> Result<(), Erc721Error> {
-        self.ownable.only_owner();
+        // self.ownable.only_owner();
         self.erc721.mint(to)?;
         Ok(())
     }
