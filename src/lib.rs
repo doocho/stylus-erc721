@@ -11,6 +11,9 @@ use stylus_sdk::{
     msg, prelude::*
 };
 use crate::erc721::{Erc721, Erc721Params, Erc721Error};
+use crate::ownable::Ownable;
+
+mod ownable;
 
 /// Initializes a custom, global allocator for Rust programs compiled to WASM.
 #[global_allocator]
@@ -19,11 +22,12 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 /// Immutable definitions
 struct StylusNFTParams;
 impl Erc721Params for StylusNFTParams {
-    const NAME: &'static str = "StylusNFT";
-    const SYMBOL: &'static str = "SNFT";
+    const NAME: &'static str = "VeriWell NFT";
+    const SYMBOL: &'static str = "VWNFT";
 
+    // nft image : https://i.ibb.co/mFyB2J9/veriwell-nft-eth.jpg
     fn token_uri(token_id: U256) -> String {
-        format!("{}{}{}", "https://my-nft-metadata.com/", token_id, ".json")
+        format!("{}", "https://veriwell-nft.s3.us-east-1.amazonaws.com/veriwell.json")
     }
 }
 
@@ -35,14 +39,17 @@ sol_storage! {
     struct StylusNFT {
         #[borrow] // Allows erc721 to access StylusNFT's storage and make calls
         Erc721<StylusNFTParams> erc721;
+        #[borrow]
+        Ownable ownable;
     }
 }
 
 #[external]
-#[inherit(Erc721<StylusNFTParams>)]
+#[inherit(Erc721<StylusNFTParams>, Ownable)]
 impl StylusNFT {
     /// Mints an NFT
     pub fn mint(&mut self) -> Result<(), Erc721Error> {
+        self.ownable.only_owner();
         let minter = msg::sender();
         self.erc721.mint(minter)?;
         Ok(())
@@ -50,6 +57,7 @@ impl StylusNFT {
 
     /// Mints an NFT to another address
     pub fn mint_to(&mut self, to: Address) -> Result<(), Erc721Error> {
+        self.ownable.only_owner();
         self.erc721.mint(to)?;
         Ok(())
     }

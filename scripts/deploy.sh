@@ -15,6 +15,6 @@ then
 fi
 
 # Deployment
-cargo stylus deploy -e $RPC_URL --private-key $PRIVATE_KEY
+cargo stylus deploy --private-key $PRIVATE_KEY
 
 # ./scripts/deploy.sh
