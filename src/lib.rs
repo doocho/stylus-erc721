@@ -7,7 +7,7 @@ mod erc721;
 
 use crate::erc721::{Erc721, Erc721Error, Erc721Params};
 use alloy_primitives::{Address, U256};
-use ownable::{OwnableAlreadyInitialized, OwnableError, OwnableInvalidOwner, OwnableUnauthorizedAccount};
+use erc721::NotOwner;
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::{msg, prelude::*};
 
@@ -49,22 +49,22 @@ sol_storage! {
 #[inherit(Erc721<StylusNFTParams>)]
 // #[inherit(Erc721<StylusNFTParams>, Ownable)]
 impl StylusNFT {
-    pub fn owner(&self) -> Result<Address, Vec<u8>>  {
+    pub fn owner(&self) -> Result<Address, Vec<u8>> {
         Ok(self.owner.get())
     }
 
-    pub fn only_owner(
-        &mut self,
-    ) -> Result<(), OwnableError> {
+    pub fn only_owner(&mut self) -> Result<(), Erc721Error> {
         if msg::sender() != self.owner.get() {
-            return Err(OwnableError::OwnableUnauthorizedAccount(OwnableUnauthorizedAccount {
-                account: msg::sender()
-            }))
+            return Err(Erc721Error::NotOwner(NotOwner {
+                from: self.owner.get(),
+                token_id: U256::from(0),
+                real_owner: self.owner.get(),
+            }));
         }
 
         Ok(())
     }
-    
+
     /// Mints an NFT
     pub fn mint(&mut self) -> Result<(), Erc721Error> {
         self.only_owner();
@@ -92,15 +92,19 @@ impl StylusNFT {
         Ok(self.erc721.total_supply.get())
     }
 
-    pub fn initialize(&mut self, initial_owner: Address) -> Result<(), OwnableError> {
+    pub fn initialize(&mut self, initial_owner: Address) -> Result<(), Erc721Error> {
         if self.initialized.get() {
-            return Err(OwnableError::OwnableAlreadyInitialized(
-                OwnableAlreadyInitialized {},
-            ));
+            return Err(Erc721Error::NotOwner(NotOwner {
+                from: self.owner.get(),
+                token_id: U256::from(0),
+                real_owner: self.owner.get(),
+            }));
         }
         if initial_owner == ZERO_ADDRESS {
-            return Err(OwnableError::OwnableInvalidOwner(OwnableInvalidOwner {
-                owner: initial_owner,
+            return Err(Erc721Error::NotOwner(NotOwner {
+                from: self.owner.get(),
+                token_id: U256::from(0),
+                real_owner: self.owner.get(),
             }));
         }
         self.owner.set(initial_owner);
