@@ -7,11 +7,11 @@ mod erc721;
 
 use crate::erc721::{Erc721, Erc721Error, Erc721Params};
 use alloy_primitives::{Address, U256};
+use ownable::{OwnableAlreadyInitialized, OwnableError, OwnableInvalidOwner};
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::{msg, prelude::*};
-// use crate::ownable::Ownable;
 
-// mod ownable;
+mod ownable;
 
 /// Initializes a custom, global allocator for Rust programs compiled to WASM.
 #[global_allocator]
@@ -28,12 +28,16 @@ impl Erc721Params for StylusNFTParams {
     }
 }
 
+const ZERO_ADDRESS: Address = Address::ZERO;
+
 // Define the entrypoint as a Solidity storage object. The sol_storage! macro
 // will generate Rust-equivalent structs with all fields mapped to Solidity-equivalent
 // storage slots and types.
 sol_storage! {
     #[entrypoint]
     struct StylusNFT {
+        address owner;
+        bool initialized;
         #[borrow] // Allows erc721 to access StylusNFT's storage and make calls
         Erc721<StylusNFTParams> erc721;
         // #[borrow]
@@ -70,5 +74,21 @@ impl StylusNFT {
     /// Total supply
     pub fn total_supply(&mut self) -> Result<U256, Erc721Error> {
         Ok(self.erc721.total_supply.get())
+    }
+
+    pub fn initialize(&mut self, initial_owner: Address) -> Result<(), OwnableError> {
+        if self.initialized.get() {
+            return Err(OwnableError::OwnableAlreadyInitialized(
+                OwnableAlreadyInitialized {},
+            ));
+        }
+        if initial_owner == ZERO_ADDRESS {
+            return Err(OwnableError::OwnableInvalidOwner(OwnableInvalidOwner {
+                owner: initial_owner,
+            }));
+        }
+        self.owner.set(initial_owner);
+        self.initialized.set(true);
+        Ok(())
     }
 }
