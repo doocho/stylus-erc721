@@ -7,7 +7,7 @@ mod erc721;
 
 use crate::erc721::{Erc721, Erc721Error, Erc721Params};
 use alloy_primitives::{Address, U256};
-use ownable::{OwnableAlreadyInitialized, OwnableError, OwnableInvalidOwner};
+use ownable::{OwnableAlreadyInitialized, OwnableError, OwnableInvalidOwner, OwnableUnauthorizedAccount};
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::{msg, prelude::*};
 
@@ -49,9 +49,25 @@ sol_storage! {
 #[inherit(Erc721<StylusNFTParams>)]
 // #[inherit(Erc721<StylusNFTParams>, Ownable)]
 impl StylusNFT {
+    pub fn owner(&self) -> Result<Address, Vec<u8>>  {
+        Ok(self.owner.get())
+    }
+
+    pub fn only_owner(
+        &mut self,
+    ) -> Result<(), OwnableError> {
+        if msg::sender() != self.owner.get() {
+            return Err(OwnableError::OwnableUnauthorizedAccount(OwnableUnauthorizedAccount {
+                account: msg::sender()
+            }))
+        }
+
+        Ok(())
+    }
+    
     /// Mints an NFT
     pub fn mint(&mut self) -> Result<(), Erc721Error> {
-        // self.ownable.only_owner();
+        self.only_owner();
         let minter = msg::sender();
         self.erc721.mint(minter)?;
         Ok(())
@@ -59,7 +75,7 @@ impl StylusNFT {
 
     /// Mints an NFT to another address
     pub fn mint_to(&mut self, to: Address) -> Result<(), Erc721Error> {
-        // self.ownable.only_owner();
+        self.only_owner();
         self.erc721.mint(to)?;
         Ok(())
     }
