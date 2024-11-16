@@ -11,8 +11,6 @@ use erc721::NotOwner;
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::{msg, prelude::*};
 
-mod ownable;
-
 /// Initializes a custom, global allocator for Rust programs compiled to WASM.
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
