@@ -65,7 +65,7 @@ impl StylusNFT {
 
     /// Mints an NFT
     pub fn mint(&mut self) -> Result<(), Erc721Error> {
-        self.only_owner();
+        self.only_owner()?;
         let minter = msg::sender();
         self.erc721.mint(minter)?;
         Ok(())
@@ -73,7 +73,7 @@ impl StylusNFT {
 
     /// Mints an NFT to another address
     pub fn mint_to(&mut self, to: Address) -> Result<(), Erc721Error> {
-        self.only_owner();
+        self.only_owner()?;
         self.erc721.mint(to)?;
         Ok(())
     }
